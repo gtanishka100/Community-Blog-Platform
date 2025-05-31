@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Home, Bell, User, Menu, X } from 'lucide-react';
+import { Search, Home, Bell, User, Menu, X, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ const Navbar = () => {
     { icon: <Home size={20} />, label: 'Home', href: '/' },
     { icon: <Bell size={20} />, label: 'Notifications', href: '#' },
     { icon: <User size={20} />, label: 'Profile', href: '#' },
+    { icon: <LogIn size={20} />, label: 'Sign In', href: '/signin' },
   ];
 
   return (
