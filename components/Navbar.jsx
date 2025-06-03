@@ -23,7 +23,7 @@ const Navbar = () => {
 
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', href: '/' },
-    { icon: <Bell size={20} />, label: 'Notifications', href: '#' },
+    { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
     { icon: <User size={20} />, label: 'Profile', href: '/profile' },
     { icon: <LogIn size={20} />, label: 'Sign In', href: '/signin' },
   ];
