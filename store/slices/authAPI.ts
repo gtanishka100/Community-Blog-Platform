@@ -7,7 +7,7 @@ import {
   LoginResponse 
 } from './authTypes';
 
-const API_BASE_URL = 'https://tanishka-640x.onrender.com/api';
+const API_BASE_URL = 'https://tanishka-0cdp.onrender.com/api';
 
 
 export const signupUser = createAsyncThunk<
@@ -92,7 +92,7 @@ export const logoutUser = createAsyncThunk<
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // a logout endpoint-later
+      // a logout endpoint
       if (typeof window !== 'undefined') {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
