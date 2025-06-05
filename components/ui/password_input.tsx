@@ -13,6 +13,7 @@ interface PasswordInputProps {
   required?: boolean;
   minLength?: number;
   className?: string;
+  disabled?: boolean; // Add this line
 }
 
 export const PasswordInput: React.FC<PasswordInputProps> = ({
@@ -24,6 +25,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   required = false,
   minLength,
   className = "",
+  disabled = false, // Add this line
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -43,12 +45,14 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         onChange={onChange}
         className={`pr-10 ${className}`}
         placeholder={placeholder}
+        disabled={disabled} // Add this line
       />
       <button
         type="button"
         onClick={togglePasswordVisibility}
-        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
         aria-label={showPassword ? "Hide password" : "Show password"}
+        disabled={disabled} // Add this line to disable the toggle button too
       >
         {showPassword ? (
           <EyeOff className="h-4 w-4" />
