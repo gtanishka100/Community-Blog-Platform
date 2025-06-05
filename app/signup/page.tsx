@@ -15,7 +15,7 @@ import { clearError } from '@/store/slices/authSlice';
 const Signup = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -31,14 +31,13 @@ const Signup = () => {
     password: ''
   });
 
-  // Redirect if already authenticated
+
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/'); // Change to your desired redirect path
+      router.push('/'); 
     }
   }, [isAuthenticated, router]);
 
-  // Clear error when component unmounts or when starting new action
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -55,7 +54,7 @@ const Signup = () => {
 
     let isValid = true;
 
-    // First name validation
+
     if (!formData.firstName.trim()) {
       errors.firstName = 'First name is required';
       isValid = false;
@@ -64,7 +63,6 @@ const Signup = () => {
       isValid = false;
     }
 
-    // Last name validation
     if (!formData.lastName.trim()) {
       errors.lastName = 'Last name is required';
       isValid = false;
@@ -73,7 +71,6 @@ const Signup = () => {
       isValid = false;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
@@ -83,7 +80,6 @@ const Signup = () => {
       isValid = false;
     }
 
-    // Password validation
     if (!formData.password) {
       errors.password = 'Password is required';
       isValid = false;
@@ -104,7 +100,7 @@ const Signup = () => {
       [name]: value
     });
 
-    // Clear specific field error when user starts typing
+
     if (formErrors[name as keyof typeof formErrors]) {
       setFormErrors({
         ...formErrors,
@@ -112,7 +108,6 @@ const Signup = () => {
       });
     }
 
-    // Clear global error when user makes changes
     if (error) {
       dispatch(clearError());
     }
@@ -134,7 +129,7 @@ const Signup = () => {
       }));
 
       if (signupUser.fulfilled.match(result)) {
-        // Success - user will be redirected by useEffect
+
         console.log('Signup successful:', result.payload);
       }
     } catch (err) {
@@ -164,7 +159,6 @@ const Signup = () => {
             </h3>
           </div>
 
-          {/* Global Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <div className="flex">
@@ -195,7 +189,7 @@ const Signup = () => {
                   onChange={handleInputChange}
                   className={`mt-1 ${formErrors.firstName ? 'border-red-500 focus:border-red-500' : ''}`}
                   placeholder="First name"
-                  disabled={loading}
+                  disabled={isLoading}
                 />
                 {formErrors.firstName && (
                   <p className="mt-1 text-xs text-red-600">{formErrors.firstName}</p>
@@ -214,7 +208,7 @@ const Signup = () => {
                   onChange={handleInputChange}
                   className={`mt-1 ${formErrors.lastName ? 'border-red-500 focus:border-red-500' : ''}`}
                   placeholder="Last name"
-                  disabled={loading}
+                  disabled={isLoading}
                 />
                 {formErrors.lastName && (
                   <p className="mt-1 text-xs text-red-600">{formErrors.lastName}</p>
@@ -235,7 +229,7 @@ const Signup = () => {
                 onChange={handleInputChange}
                 className={`mt-1 ${formErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder="Email"
-                disabled={loading}
+                disabled={isLoading}
               />
               {formErrors.email && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.email}</p>
@@ -255,7 +249,7 @@ const Signup = () => {
                 onChange={handleInputChange}
                 className={`mt-1 ${formErrors.password ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder="Password"
-                // disabled={loading}
+                disabled={isLoading}
               />
               {formErrors.password && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.password}</p>
@@ -280,10 +274,10 @@ const Signup = () => {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-full text-lg flex items-center justify-center"
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -308,7 +302,7 @@ const Signup = () => {
             <Button
               type="button"
               variant="outline"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full border-2 border-gray-300 hover:border-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed text-gray-700 font-semibold py-3 px-4 rounded-full text-lg flex items-center justify-center space-x-3"
             >
               <Image

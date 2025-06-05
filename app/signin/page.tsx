@@ -1,58 +1,81 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password_input';
-
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { loginUser, clearError } from '@/store/slices/authSlice';
 
 const Signin = () => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Signin data:', formData);
+    dispatch(clearError());
+    try {
+      const result = await dispatch(loginUser(formData)).unwrap();
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-white flex">
-
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
-   
-        <div className="text-center flex flex-col items-center justify-center">
-  <div className="mb-2">
-    <Image
-      src="./Images/googleimg.png"
-      alt="Google"
-      width={150}
-      height={60}
-      className="w-[150px] h-auto object-contain"
-    />
-  </div>
-  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-    Welcome back
-  </h2>
-  <h3 className="text-lg text-gray-600 mb-6">
-    Sign in to your account
-  </h3>
-</div>
-
+          <div className="text-center flex flex-col items-center justify-center">
+            <div className="mb-2">
+              <Image
+                src="./Images/googleimg.png"
+                alt="Google"
+                width={150}
+                height={60}
+                className="w-[150px] h-auto object-contain"
+              />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back
+            </h2>
+            <h3 className="text-lg text-gray-600 mb-6">
+              Sign in to your account
+            </h3>
+          </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             <div>
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
@@ -66,6 +89,7 @@ const Signin = () => {
                 onChange={handleInputChange}
                 className="mt-1"
                 placeholder="Email"
+                disabled={isLoading}
               />
             </div>
 
@@ -73,16 +97,17 @@ const Signin = () => {
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </Label>
-             <PasswordInput
-                             id="password"
-                             name="password"
-                             required
-                             minLength={6}
-                             value={formData.password}
-                             onChange={handleInputChange}
-                             className="mt-1"
-                             placeholder="Password"
-                           />
+              <PasswordInput
+                id="password"
+                name="password"
+                required
+                minLength={6}
+                value={formData.password}
+                onChange={handleInputChange}
+                className="mt-1"
+                placeholder="Password"
+                disabled={isLoading}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -93,9 +118,17 @@ const Signin = () => {
 
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-full text-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
             >
-              Sign in
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                'Sign in'
+              )}
             </Button>
 
             <div className="relative">
@@ -111,6 +144,7 @@ const Signin = () => {
               type="button"
               variant="outline"
               className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-3 px-4 rounded-full text-lg flex items-center justify-center space-x-3"
+              disabled={isLoading}
             >
               <Image
                 src="https://www.google.com/images/branding/googleg/2x/googleg_standard_color_18dp.png"
@@ -141,13 +175,13 @@ const Signin = () => {
               <div className="text-center">
                 <div className="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                     <Image
-                                          src="https://www.google.com/images/branding/googleg/2x/googleg_standard_color_18dp.png"
-                                          alt="Google"
-                                          width={18}
-                                          height={18}
-                                          className="w-5 h-5"
-                                        />
+                    <Image
+                      src="https://www.google.com/images/branding/googleg/2x/googleg_standard_color_18dp.png"
+                      alt="Google"
+                      width={18}
+                      height={18}
+                      className="w-5 h-5"
+                    />
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
