@@ -1,3 +1,4 @@
+
 export interface User {
     id: string;
     firstName: string;
@@ -11,6 +12,7 @@ export interface User {
     refreshToken: string;
   }
   
+
   export interface SignupRequest {
     firstName: string;
     lastName: string;
@@ -23,11 +25,27 @@ export interface User {
     user: User;
     tokens: Tokens;
   }
+ 
+  export interface LoginRequest {
+    email: string;
+    password: string;
+  }
   
+  export interface LoginResponse {
+    message: string;
+    user: User;
+    tokens: Tokens;
+  }
+ 
   export interface AuthState {
     user: User | null;
     tokens: Tokens | null;
-    loading: boolean;
+    isLoading: boolean; 
     error: string | null;
     isAuthenticated: boolean;
+  }
+ 
+  export interface AuthError {
+    message: string;
+    status?: number;
   }
