@@ -1,38 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, LoginRequest, LoginResponse, AuthError } from './authTypes';
-import { signupUser } from './authAPI'; 
-
-export const loginUser = createAsyncThunk<
-  LoginResponse,
-  LoginRequest,
-  { rejectValue: string }
->(
-  'auth/login',
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await fetch('https://tanishka-0cdp.onrender.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Login failed');
-      }
-
-      return data;
-    } catch (error) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue('An unexpected error occurred');
-    }
-  }
-);
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AuthState, LoginResponse, AuthError } from './authTypes';
+import { signupUser, loginUser } from './authAPI'; // Import both functions from authAPI
 
 const initialState: AuthState = {
   user: null,
@@ -82,6 +50,7 @@ const authSlice = createSlice({
     },
     setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
       state.tokens = action.payload;
+      state.isAuthenticated = true; // Add this line
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', action.payload.accessToken);
         localStorage.setItem('refreshToken', action.payload.refreshToken);
@@ -90,6 +59,7 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Signup cases
       .addCase(signupUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -100,19 +70,18 @@ const authSlice = createSlice({
         state.tokens = action.payload.tokens;
         state.isAuthenticated = true;
         state.error = null;
-    
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', action.payload.tokens.accessToken);
-          localStorage.setItem('refreshToken', action.payload.tokens.refreshToken);
-          localStorage.setItem('user', JSON.stringify(action.payload.user));
-        }
+        
+        // Note: localStorage is already handled in authAPI.ts
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Signup failed';
         state.isAuthenticated = false;
+        state.user = null;
+        state.tokens = null;
       })
       
+      // Login cases
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -124,11 +93,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
         
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', action.payload.tokens.accessToken);
-          localStorage.setItem('refreshToken', action.payload.tokens.refreshToken);
-          localStorage.setItem('user', JSON.stringify(action.payload.user));
-        }
+        // Note: localStorage is already handled in authAPI.ts
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;

@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password_input';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { loginUser, clearError } from '@/store/slices/authSlice';
+import {clearError } from '@/store/slices/authSlice';
+import {loginUser } from '@/store/slices/authAPI';
+
 
 const Signin = () => {
   const dispatch = useAppDispatch();
