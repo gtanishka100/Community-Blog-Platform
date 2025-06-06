@@ -1,4 +1,3 @@
-
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { 
   SignupRequest, 
@@ -8,7 +7,6 @@ import {
 } from './authTypes';
 
 const API_BASE_URL = 'https://tanishka-0cdp.onrender.com';
-
 
 export const signupUser = createAsyncThunk<
   SignupResponse,
@@ -33,7 +31,7 @@ export const signupUser = createAsyncThunk<
 
       const data: SignupResponse = await response.json();
       
-
+      // Store tokens in localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', data.tokens.accessToken);
         localStorage.setItem('refreshToken', data.tokens.refreshToken);
@@ -70,7 +68,7 @@ export const loginUser = createAsyncThunk<
 
       const data: LoginResponse = await response.json();
       
-
+      // Store tokens in localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', data.tokens.accessToken);
         localStorage.setItem('refreshToken', data.tokens.refreshToken);
@@ -92,7 +90,7 @@ export const logoutUser = createAsyncThunk<
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // a logout endpoint
+      // Clear localStorage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
