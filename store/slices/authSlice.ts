@@ -10,7 +10,7 @@ export const loginUser = createAsyncThunk<
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://tanishka-640x.onrender.com/api', {
+      const response = await fetch('https://tanishka-0cdp.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
