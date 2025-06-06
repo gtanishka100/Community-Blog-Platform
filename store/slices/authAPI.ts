@@ -6,7 +6,7 @@ import {
   LoginResponse 
 } from './authTypes';
 
-const API_BASE_URL = 'https://tanishka-0cdp.onrender.com';
+const API_BASE_URL = 'https://tanishka-0cdp.onrender.com/api';
 
 export const signupUser = createAsyncThunk<
   SignupResponse,
