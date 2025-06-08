@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Camera, MapPin, Calendar, Edit3, Save, X, MoreHorizontal, Trash2, MessageCircle, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,8 +10,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Navbar from '@/components/Navbar';
 import CommentDialog from '@/components/Comments';
+import { fetchPosts, updatePost, deletePost, toggleLike, updatePostLocal } from '@/store/slices/postsSlice';
 
 const Profile = () => {
+  const dispatch = useDispatch();
+  const { posts, pagination, loading, error, postLikes } = useSelector(state => state.posts);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [accessToken, setAccessToken] = useState('');
+
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("Passionate software developer with 5+ years of experience in React, TypeScript, and modern web technologies. Always eager to learn new technologies and contribute to meaningful projects.");
   const [editBio, setEditBio] = useState(bio);
@@ -20,7 +27,16 @@ const Profile = () => {
 
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [postLikes, setPostLikes] = useState({});
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken'); 
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setAccessToken(token);
+    setCurrentUser(user);
+
+    if (token) {
+      dispatch(fetchPosts({ page: 1, limit: 10, token }));
+    }
+  }, [dispatch]);
 
   const handleSaveBio = () => {
     setBio(editBio);
@@ -32,104 +48,26 @@ const Profile = () => {
     setIsEditingBio(false);
   };
 
-  const [userPosts, setUserPosts] = useState([
-    {
-      id: 1,
-      content: "Just finished an amazing project using React and TypeScript! The learning never stops in tech. 🚀",
-      timestamp: "2 hours ago",
-      likes: 24,
-      comments: 8,
-      author: { name: "John Developer", title: "Senior Software Engineer" }
-    },
-    {
-      id: 2,
-      content: "Attending the GDG DevFest was incredible! Met so many talented developers and learned about the latest in AI and web development.",
-      timestamp: "1 day ago",
-      likes: 45,
-      comments: 12,
-      author: { name: "John Developer", title: "Senior Software Engineer" }
-    },
-    {
-      id: 3,
-      content: "Working on a new open source project. Excited to share it with the community soon! #OpenSource #Development",
-      timestamp: "3 days ago",
-      likes: 32,
-      comments: 6,
-      author: { name: "John Developer", title: "Senior Software Engineer" }
-    }
-  ]);
-
-
-  const postComments = {
-    1: [
-      {
-        id: '1',
-        author: 'Sarah Chen',
-        role: 'Frontend Developer',
-        content: 'React and TypeScript is such a powerful combination! What was the most challenging part of your project?',
-        time: '1h ago',
-        likes: 3,
-        isLiked: false
-      },
-      {
-        id: '2',
-        author: 'Mike Johnson',
-        role: 'Full Stack Developer',
-        content: 'Congrats on finishing the project! Would love to hear more about your tech stack.',
-        time: '45m ago',
-        likes: 1,
-        isLiked: false
-      }
-    ],
-    2: [
-      {
-        id: '3',
-        author: 'Emily Davis',
-        role: 'Product Manager',
-        content: 'GDG DevFest events are always amazing! Which session was your favorite?',
-        time: '20h ago',
-        likes: 5,
-        isLiked: false
-      },
-      {
-        id: '4',
-        author: 'Alex Rodriguez',
-        role: 'AI Engineer',
-        content: 'The AI sessions this year were incredible. Did you check out the machine learning workshop?',
-        time: '18h ago',
-        likes: 2,
-        isLiked: false
-      }
-    ],
-    3: [
-      {
-        id: '5',
-        author: 'Lisa Wang',
-        role: 'Open Source Contributor',
-        content: 'Excited to see what you\'re building! Open source is the way to go 🚀',
-        time: '2d ago',
-        likes: 4,
-        isLiked: false
-      }
-    ]
-  };
-
   const handleEditPost = (postId, content) => {
     setEditingPostId(postId);
     setEditPostContent(content);
     setOpenDropdownId(null);
   };
 
-  const handleSavePost = (postId) => {
-    setUserPosts(posts => 
-      posts.map(post => 
-        post.id === postId 
-          ? { ...post, content: editPostContent }
-          : post
-      )
-    );
-    setEditingPostId(null);
-    setEditPostContent('');
+  const handleSavePost = async (postId) => {
+    if (accessToken) {
+      try {
+        await dispatch(updatePost({ 
+          postId, 
+          content: editPostContent, 
+          token: accessToken 
+        })).unwrap();
+        setEditingPostId(null);
+        setEditPostContent('');
+      } catch (error) {
+        console.error('Failed to update post:', error);
+      }
+    }
   };
 
   const handleCancelEditPost = () => {
@@ -137,9 +75,15 @@ const Profile = () => {
     setEditPostContent('');
   };
 
-  const handleDeletePost = (postId) => {
+  const handleDeletePost = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
-      setUserPosts(posts => posts.filter(post => post.id !== postId));
+      if (accessToken) {
+        try {
+          await dispatch(deletePost({ postId, token: accessToken })).unwrap();
+        } catch (error) {
+          console.error('Failed to delete post:', error);
+        }
+      }
     }
     setOpenDropdownId(null);
   };
@@ -154,34 +98,64 @@ const Profile = () => {
   };
 
   const handleLikePost = (postId) => {
-    setPostLikes(prev => ({
-      ...prev,
-      [postId]: !prev[postId]
-    }));
-    
-    setUserPosts(posts => 
-      posts.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              likes: postLikes[postId] ? post.likes - 1 : post.likes + 1
-            }
-          : post
-      )
-    );
+    dispatch(toggleLike(postId));
   };
 
   const handleAddComment = (commentContent) => {
     if (selectedPost) {
-      setUserPosts(posts => 
-        posts.map(post => 
-          post.id === selectedPost.id 
-            ? { ...post, comments: post.comments + 1 }
-            : post
-        )
-      );
+      console.log('Adding comment:', commentContent);
     }
   };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 48) return '1 day ago';
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
+
+  const getInitials = (firstName, lastName) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  if (loading && posts.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading posts...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-600">Error loading posts: {error}</p>
+            <Button 
+              onClick={() => dispatch(fetchPosts({ page: 1, limit: 10, token: accessToken }))}
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50" onClick={() => setOpenDropdownId(null)}>
@@ -207,7 +181,9 @@ const Profile = () => {
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-white">
                   <AvatarImage src="" />
-                  <AvatarFallback className="text-2xl bg-gray-300 text-gray-600">JD</AvatarFallback>
+                  <AvatarFallback className="text-2xl bg-gray-300 text-gray-600">
+                    {currentUser ? getInitials(currentUser.firstName, currentUser.lastName) : 'U'}
+                  </AvatarFallback>
                 </Avatar>
                 <Button
                   variant="outline"
@@ -223,20 +199,21 @@ const Profile = () => {
           <CardContent className="pt-20 pb-6">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">John Developer</h1>
-                <p className="text-xl text-gray-600 mt-1">Senior Software Engineer</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'User'}
+                </h1>
+                <p className="text-xl text-gray-600 mt-1">Software Engineer</p>
                 <div className="flex items-center text-gray-500 mt-2 space-x-4">
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Mumbai, India</span>
+                    <span className="text-sm">India</span>
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Joined March 2020</span>
+                    <span className="text-sm">Joined 2024</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 mt-3 text-sm text-gray-600">
-            
                   <span><strong>234</strong> followers</span>
                 </div>
               </div>
@@ -312,110 +289,156 @@ const Profile = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-semibold">Posts</h2>
+                <h2 className="text-lg font-semibold">Posts ({pagination.totalPosts})</h2>
               </CardHeader>
               <CardContent className="space-y-6">
-                {userPosts.map((post) => (
-                  <div key={post.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-gray-300 text-gray-600">JD</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-gray-900">John Developer</span>
-                            <span className="text-gray-500 text-sm">•</span>
-                            <span className="text-gray-500 text-sm">{post.timestamp}</span>
-                          </div>
-                          <div className="relative" onClick={(e) => e.stopPropagation()}>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => toggleDropdown(post.id)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            {openDropdownId === post.id && (
-                              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
-                                <button
-                                  onClick={() => handleEditPost(post.id, post.content)}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center"
+                {posts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No posts yet. Start sharing your thoughts!</p>
+                  </div>
+                ) : (
+                  posts.map((post) => (
+                    <div key={post._id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarFallback className="bg-gray-300 text-gray-600">
+                            {getInitials(post.author?.firstName, post.author?.lastName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-semibold text-gray-900">
+                                {post.author?.firstName} {post.author?.lastName}
+                              </span>
+                              <span className="text-gray-500 text-sm">•</span>
+                              <span className="text-gray-500 text-sm">{formatDate(post.createdAt)}</span>
+                              <span className="text-gray-500 text-sm">• {post.readTime} min read</span>
+                            </div>
+                            {currentUser && currentUser._id === post.author?._id && (
+                              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => toggleDropdown(post._id)}
+                                  className="h-8 w-8 p-0"
                                 >
-                                  <Edit3 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeletePost(post.id)}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center text-red-600"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </button>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                                {openDropdownId === post._id && (
+                                  <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
+                                    <button
+                                      onClick={() => handleEditPost(post._id, post.content)}
+                                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center"
+                                    >
+                                      <Edit3 className="h-4 w-4 mr-2" />
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeletePost(post._id)}
+                                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        </div>
-                        
-                        {editingPostId === post.id ? (
-                          <div className="mt-2 space-y-3">
-                            <Textarea
-                              value={editPostContent}
-                              onChange={(e) => setEditPostContent(e.target.value)}
-                              className="min-h-[80px]"
-                            />
-                            <div className="flex space-x-2">
-                              <Button size="sm" onClick={() => handleSavePost(post.id)}>
-                                <Save className="h-4 w-4 mr-2" />
-                                Save
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={handleCancelEditPost}>
-                                <X className="h-4 w-4 mr-2" />
-                                Cancel
-                              </Button>
+                          
+                          {editingPostId === post._id ? (
+                            <div className="mt-2 space-y-3">
+                              <Textarea
+                                value={editPostContent}
+                                onChange={(e) => setEditPostContent(e.target.value)}
+                                className="min-h-[80px]"
+                              />
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleSavePost(post._id)}
+                                  disabled={loading}
+                                >
+                                  <Save className="h-4 w-4 mr-2" />
+                                  {loading ? 'Saving...' : 'Save'}
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleCancelEditPost}>
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
+                          ) : (
+                            <p className="text-gray-700 mt-2 leading-relaxed">{post.content}</p>
+                          )}
+                          
+                          {post.tags && post.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {post.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center space-x-6 mt-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleLikePost(post._id)}
+                              className={`flex items-center space-x-1 text-sm ${
+                                postLikes[post._id] ? 'text-red-500' : 'text-gray-500'
+                              } hover:text-red-500`}
+                            >
+                              <Heart className={`h-4 w-4 ${postLikes[post._id] ? 'fill-current' : ''}`} />
+                              <span>{post.likes?.length || 0}</span>
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCommentClick(post)}
+                              className="flex items-center space-x-1 text-sm text-gray-500 hover:text-blue-500"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{post.comments?.length || 0}</span>
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center space-x-1 text-sm text-gray-500 hover:text-green-500"
+                            >
+                              <Share2 className="h-4 w-4" />
+                              <span>Share</span>
+                            </Button>
                           </div>
-                        ) : (
-                          <p className="text-gray-700 mt-2 leading-relaxed">{post.content}</p>
-                        )}
-                        
-                        <div className="flex items-center space-x-6 mt-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLikePost(post.id)}
-                            className={`flex items-center space-x-1 text-sm ${
-                              postLikes[post.id] ? 'text-red-500' : 'text-gray-500'
-                            } hover:text-red-500`}
-                          >
-                            <Heart className={`h-4 w-4 ${postLikes[post.id] ? 'fill-current' : ''}`} />
-                            <span>{post.likes}</span>
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCommentClick(post)}
-                            className="flex items-center space-x-1 text-sm text-gray-500 hover:text-blue-500"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            <span>{post.comments}</span>
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center space-x-1 text-sm text-gray-500 hover:text-green-500"
-                          >
-                            <Share2 className="h-4 w-4" />
-                            <span>Share</span>
-                          </Button>
                         </div>
                       </div>
                     </div>
+                  ))
+                )}
+                
+                {pagination.hasNext && (
+                  <div className="text-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => dispatch(fetchPosts({ 
+                        page: pagination.currentPage + 1, 
+                        limit: 10, 
+                        token: accessToken 
+                      }))}
+                      disabled={loading}
+                    >
+                      {loading ? 'Loading...' : 'Load More Posts'}
+                    </Button>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
@@ -424,9 +447,9 @@ const Profile = () => {
       <CommentDialog
         isOpen={isCommentDialogOpen}
         onClose={() => setIsCommentDialogOpen(false)}
-        postAuthor={selectedPost?.author?.name}
+        postAuthor={selectedPost?.author?.firstName + ' ' + selectedPost?.author?.lastName}
         postContent={selectedPost?.content}
-        comments={selectedPost ? postComments[selectedPost.id] || [] : []}
+        comments={[]}
         onAddComment={handleAddComment}
       />
     </div>
