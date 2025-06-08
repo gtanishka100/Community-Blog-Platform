@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import CreatePostCard from './CreatePostCard';
 import PostCard from './PostCard';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { fetchPosts } from '@/store/slices/blogAPI';
+// import { fetchPosts } from '@/store/slices/blogAPI';
 import { LoaderCircle } from 'lucide-react';
 
 const Feed = () => {
@@ -12,15 +12,12 @@ const Feed = () => {
   const { posts, isLoading, error } = useAppSelector((state) => state.blog);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchPosts());
-    }
-  }, [dispatch, isAuthenticated]);
+
 
   const handlePostCreated = (newPost) => {
     console.log('New post created:', newPost);
   };
+
   const transformedPosts = posts.map(post => ({
     id: post._id,
     author: {
@@ -35,7 +32,6 @@ const Feed = () => {
     tags: post.tags,
     readTime: post.readTime,
     isPublished: post.isPublished,
-
   }));
 
   if (!isAuthenticated) {

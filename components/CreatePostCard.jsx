@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 const CreatePostCard = ({ onPostCreated }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
+
   const { user } = useAppSelector((state) => state.auth);
   const { isCreatingPost, error } = useAppSelector((state) => state.blog);
   
@@ -23,15 +24,37 @@ const CreatePostCard = ({ onPostCreated }) => {
   const [tags, setTags] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+
   const getInitials = (firstName, lastName) => {
     return `${firstName?.charAt(0)?.toUpperCase() || ''}${lastName?.charAt(0)?.toUpperCase() || ''}`;
   };
 
   const handleCreatePost = async () => {
-    if (!postContent.trim()) {
+    const trimmedContent = postContent.trim();
+    
+    if (!trimmedContent) {
       toast({
         title: "Error",
         description: "Post content cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (trimmedContent.length < 10) {
+      toast({
+        title: "Error",
+        description: "Content must be at least 10 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (trimmedContent.length > 10000) {
+      toast({
+        title: "Error",
+        description: "Content must be between 10 and 10000 characters",
         variant: "destructive",
       });
       return;
@@ -45,6 +68,7 @@ const CreatePostCard = ({ onPostCreated }) => {
       });
       return;
     }
+
     const tagArray = tags
       .split(',')
       .map(tag => tag.trim())
@@ -60,6 +84,7 @@ const CreatePostCard = ({ onPostCreated }) => {
       const result = await dispatch(createPost(postData));
       
       if (createPost.fulfilled.match(result)) {
+
         setPostContent('');
         setTags('');
         setIsPublished(true);
@@ -69,6 +94,7 @@ const CreatePostCard = ({ onPostCreated }) => {
           title: "Success",
           description: "Post created successfully!",
         });
+
         if (onPostCreated) {
           onPostCreated(result.payload.post);
         }
@@ -113,11 +139,28 @@ const CreatePostCard = ({ onPostCreated }) => {
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <Textarea
-              placeholder="What's on your mind?"
+              placeholder="What's on your mind? (minimum 10 characters)"
               value={postContent}
               onChange={(e) => setPostContent(e.target.value)}
               className="min-h-[80px] resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
             />
+            
+
+            <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+              <span>
+                {postContent.length < 10 && postContent.length > 0 && (
+                  <span className="text-red-500">
+                    {10 - postContent.length} more characters needed
+                  </span>
+                )}
+                {postContent.length >= 10 && (
+                  <span className="text-green-600">✓ Minimum length met</span>
+                )}
+              </span>
+              <span className={postContent.length > 10000 ? 'text-red-500' : ''}>
+                {postContent.length}/10000
+              </span>
+            </div>
             
             {showAdvanced && (
               <div className="mt-4 space-y-3 p-3 bg-gray-50 rounded-md">
@@ -183,7 +226,7 @@ const CreatePostCard = ({ onPostCreated }) => {
         </div>
         <Button 
           onClick={handleCreatePost} 
-          disabled={!postContent.trim() || isCreatingPost || !user}
+          disabled={postContent.trim().length < 10 || postContent.length > 10000 || isCreatingPost || !user}
           className="bg-[#4285F4] hover:bg-[#3367d6] text-white disabled:opacity-50"
         >
           {isCreatingPost ? 'Posting...' : 'Post'}

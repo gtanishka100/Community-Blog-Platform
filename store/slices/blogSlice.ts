@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { BlogState, BlogPost, CreatePostResponse } from './blogTypes';
-import { createPost, fetchPosts } from './blogAPI';
+import { createPost} from './blogAPI';
 
 const initialState: BlogState = {
   posts: [],
@@ -34,7 +34,6 @@ const blogSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-  
       .addCase(createPost.pending, (state) => {
         state.isCreatingPost = true;
         state.error = null;
@@ -49,20 +48,6 @@ const blogSlice = createSlice({
         state.error = action.payload || 'Failed to create post';
       })
       
-
-      .addCase(fetchPosts.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(fetchPosts.fulfilled, (state, action: PayloadAction<BlogPost[]>) => {
-        state.isLoading = false;
-        state.posts = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchPosts.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch posts';
-      });
   },
 });
 
