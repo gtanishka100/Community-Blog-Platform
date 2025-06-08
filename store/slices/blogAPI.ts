@@ -2,7 +2,8 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { 
   CreatePostRequest, 
   CreatePostResponse, 
-  BlogPost 
+  BlogPost,
+  DiscoverPostsResponse 
 } from './blogTypes';
 
 const API_BASE_URL = 'https://tanishka-0cdp.onrender.com/api';
@@ -64,6 +65,7 @@ export const createPost = createAsyncThunk<
     }
   }
 );
+
 export const fetchPosts = createAsyncThunk<
   BlogPost[],
   void,
@@ -94,6 +96,55 @@ export const fetchPosts = createAsyncThunk<
       return data.posts || data; 
     } catch (error) {
       return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const fetchDiscoverPosts = createAsyncThunk<
+  DiscoverPostsResponse,
+  void,
+  { rejectValue: string }
+>(
+  'blog/fetchDiscoverPosts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      
+      console.log('Fetching discover posts with token:', token ? 'Present' : 'Missing');
+      
+      if (!token) {
+        return rejectWithValue('No authentication token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/posts/discover`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Discover posts response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Discover posts error response:', errorText);
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          return rejectWithValue(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        } catch {
+          return rejectWithValue(`HTTP ${response.status}: ${errorText || response.statusText}`);
+        }
+      }
+
+      const data: DiscoverPostsResponse = await response.json();
+      console.log('Discover posts success response:', data);
+      return data;
+    } catch (error: unknown) {
+      console.error('Discover posts network error:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      return rejectWithValue(`Network error: ${errorMessage}`);
     }
   }
 );
