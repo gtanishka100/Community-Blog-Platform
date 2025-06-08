@@ -3,14 +3,20 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Home, Bell, User, Menu, X, LogIn } from 'lucide-react';
+import { Search, Home, Bell, User, Menu, X, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useAppSelector, useAppDispatch } from '@/lib/hooks';
+import { logout } from '@/store/slices/authSlice';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Get authentication state from Redux store
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,11 +27,21 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Function to handle logout
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', href: '/' },
     { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
     { icon: <User size={20} />, label: 'Profile', href: '/profile' },
-    { icon: <LogIn size={20} />, label: 'Sign In', href: '/signin' },
+    {
+      icon: isAuthenticated ? <LogOut size={20} /> : <LogIn size={20} />,
+      label: isAuthenticated ? 'Log Out' : 'Sign In',
+      href: isAuthenticated ? '#' : '/signin',
+      onClick: isAuthenticated ? handleLogout : undefined
+    },
   ];
 
   return (
@@ -85,14 +101,25 @@ const Navbar = () => {
 
           <nav className="hidden md:flex md:space-x-4 lg:space-x-6">
             {navItems.map((item, index) => (
-              <Link 
-                key={index} 
-                href={item.href}
-                className="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                {item.icon}
-                <span className="text-xs mt-1">{item.label}</span>
-              </Link>
+              item.onClick ? (
+                <button
+                  key={index}
+                  onClick={item.onClick}
+                  className="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  {item.icon}
+                  <span className="text-xs mt-1">{item.label}</span>
+                </button>
+              ) : (
+                <Link 
+                  key={index} 
+                  href={item.href}
+                  className="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  {item.icon}
+                  <span className="text-xs mt-1">{item.label}</span>
+                </Link>
+              )
             ))}
           </nav>
         </div>
@@ -104,15 +131,29 @@ const Navbar = () => {
           <div className="px-4 py-2">
             <div className="flex flex-col space-y-2">
               {navItems.map((item, index) => (
-                <Link 
-                  key={index} 
-                  href={item.href}
-                  className="flex items-center px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </Link>
+                item.onClick ? (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      item.onClick();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors text-left w-full"
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                ) : (
+                  <Link 
+                    key={index} 
+                    href={item.href}
+                    className="flex items-center px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                )
               ))}
             </div>
           </div>
