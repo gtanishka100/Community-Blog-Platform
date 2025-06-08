@@ -1,10 +1,13 @@
+'use client'
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { UserPlus } from 'lucide-react';
+import { useAppSelector } from '@/lib/hooks';
 
 const LeftSidebar = () => {
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const getInitials = (name) => {
     return name
@@ -33,15 +36,12 @@ const LeftSidebar = () => {
       avatar: 'https://i.pravatar.cc/150?img=33',
     },
   ];
-
-  // const userGroups = [
-  //   { id: 1, name: 'GDG Cloud', members: 1243 },
-  //   { id: 2, name: 'Flutter Devs', members: 872 },
-  //   { id: 3, name: 'Women Techmakers', members: 654 },
-  //   { id: 4, name: 'Web Performance', members: 329 },
-  // ];
-
-  const userName = "Your Name"; 
+  const userName = isAuthenticated && user 
+    ? `${user.firstName} ${user.lastName}` 
+    : "Guest User";
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
@@ -54,8 +54,13 @@ const LeftSidebar = () => {
                 {getInitials(userName)}
               </AvatarFallback>
             </Avatar>
-            <h2 className="font-bold mt-2">Your Name</h2>
-            <p className="text-sm text-gray-500">GDG Member</p>
+            <h2 className="font-bold mt-2">{userName}</h2>
+            <p className="text-sm text-gray-500">
+              {user?.email ? `${user.email}` : 'GDG Member'}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              GDG Member
+            </p>
             
             <div className="mt-4 text-xs border-t border-b py-2">
               <div className="flex justify-between py-1">
@@ -69,7 +74,7 @@ const LeftSidebar = () => {
             </div>
             
             <Button asChild variant="ghost" className="w-full justify-start p-2 mt-2">
-              <Link href="#">
+              <Link href="/profile">
                 <span className="text-xs">My Profile</span>
               </Link>
             </Button>
@@ -105,25 +110,6 @@ const LeftSidebar = () => {
           </Button>
         </CardContent>
       </Card>
-
-      {/* <Card>
-        <CardContent className="p-4">
-          <h3 className="font-medium text-sm mb-3">My Groups</h3>
-          <div className="space-y-2">
-            {userGroups.map((group) => (
-              <Link href="#" key={group.id} className="block">
-                <div className="text-xs font-medium hover:text-blue-600 transition-colors">
-                  {group.name}
-                </div>
-                <div className="text-xs text-gray-500">{group.members} members</div>
-              </Link>
-            ))}
-          </div>
-          <Button className="w-full mt-3 text-xs" variant="outline">
-            Discover More Groups
-          </Button>
-        </CardContent>
-      </Card> */}
     </div>
   );
 };
