@@ -1,66 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import CreatePostCard from './CreatePostCard';
-import PostCard from './PostCard'; 
-
-const samplePosts = [
-  {
-    id: 1,
-    author: {
-      name: 'Sarah Chen',
-      title: 'Frontend Developer at Google',
-      avatar: 'https://i.pravatar.cc/150?img=44',
-    },
-    content: 'Just published my first article on web performance optimization. Check it out on the GDG blog!',
-    date: '2025-04-10T14:30:00Z',
-    likes: 42,
-    comments: 8,
-  },
-  {
-    id: 2,
-    author: {
-      name: 'Michael Rodriguez',
-      title: 'Android Developer',
-      avatar: 'https://i.pravatar.cc/150?img=12',
-    },
-    content: 'Excited to announce our upcoming GDG event on Flutter development. Join us next Saturday for hands-on workshops and networking!',
-    image: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    date: '2025-04-09T09:15:00Z',
-    likes: 78,
-    comments: 23,
-  },
-  {
-    id: 3,
-    author: {
-      name: 'Priya Sharma',
-      title: 'UX Designer',
-      avatar: 'https://i.pravatar.cc/150?img=28',
-    },
-    content: 'Just redesigned the community portal for better accessibility. Would love your feedback on the new navigation system!',
-    image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    date: '2025-04-08T16:45:00Z',
-    likes: 56,
-    comments: 14,
-  },
-];
+import PostCard from './PostCard';
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { fetchPosts } from '@/store/slices/blogAPI';
+import { LoaderCircle } from 'lucide-react';
 
 const Feed = () => {
-  const [posts, setPosts] = useState(samplePosts);
+  const dispatch = useAppDispatch();
+  const { posts, isLoading, error } = useAppSelector((state) => state.blog);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchPosts());
+    }
+  }, [dispatch, isAuthenticated]);
 
   const handlePostCreated = (newPost) => {
-    setPosts([newPost, ...posts]);
+    console.log('New post created:', newPost);
   };
+  const transformedPosts = posts.map(post => ({
+    id: post._id,
+    author: {
+      name: `${post.author.firstName} ${post.author.lastName}`,
+      title: 'Community Member', 
+      avatar: `https://i.pravatar.cc/150?u=${post.author.email}`, 
+    },
+    content: post.content,
+    date: post.createdAt,
+    likes: post.likes.length,
+    comments: post.comments.length,
+    tags: post.tags,
+    readTime: post.readTime,
+    isPublished: post.isPublished,
+
+  }));
+
+  if (!isAuthenticated) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-gray-600">Please log in to view and create posts.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="py-4">
       <CreatePostCard onPostCreated={handlePostCreated} />
       
-      <div>
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-600 text-sm">Error: {error}</p>
+        </div>
+      )}
+      
+      {isLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <LoaderCircle className="h-8 w-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading posts...</span>
+        </div>
+      ) : (
+        <div>
+          {transformedPosts.length > 0 ? (
+            transformedPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No posts yet. Create your first post!</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
