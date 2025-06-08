@@ -16,6 +16,11 @@ export interface BlogPost {
   updatedAt: string;
   __v: number;
 }
+export interface DiscoverBlogPost extends BlogPost {
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+}
 
 export interface CreatePostRequest {
   content: string;
@@ -28,9 +33,15 @@ export interface CreatePostResponse {
   post: BlogPost;
 }
 
+export interface DiscoverPostsResponse {
+  posts: DiscoverBlogPost[];
+}
+
 export interface BlogState {
   posts: BlogPost[];
+  discoverPosts: DiscoverBlogPost[];
   isLoading: boolean;
+  isLoadingDiscover: boolean;
   error: string | null;
   isCreatingPost: boolean;
 }

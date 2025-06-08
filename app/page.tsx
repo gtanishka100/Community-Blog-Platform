@@ -1,4 +1,3 @@
-// app/page.tsx
 import Feed from '@/components/Feed';
 import RightSidebar from '@/components/RightSidebar';
 import LeftSidebar from '@/components/LeftSidebar';
