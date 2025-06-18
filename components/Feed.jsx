@@ -28,37 +28,45 @@ const Feed = () => {
       dispatch(fetchDiscoverPosts());
     }
   };
-  const transformedPosts = posts.map(post => ({
-    id: post._id,
-    author: {
-      name: `${post.author.firstName} ${post.author.lastName}`,
-      title: 'Community Member', 
-      avatar: `https://i.pravatar.cc/150?u=${post.author.email}`, 
-    },
-    content: post.content,
-    date: post.createdAt,
-    likes: post.likes.length,
-    comments: post.comments.length,
-    tags: post.tags,
-    readTime: post.readTime,
-    isPublished: post.isPublished,
-  }));
-  const transformedDiscoverPosts = discoverPosts.map(post => ({
-    id: post._id,
-    author: {
-      name: `${post.author.firstName} ${post.author.lastName}`,
-      title: 'Community Member', 
-      avatar: `https://i.pravatar.cc/150?u=${post.author.email}`, 
-    },
-    content: post.content,
-    date: post.createdAt,
-    likes: post.likesCount,
-    comments: post.commentsCount,
-    tags: post.tags,
-    readTime: post.readTime,
-    isPublished: post.isPublished,
-    isLiked: post.isLiked,
-  }));
+
+  // Transform posts with null checks
+  const transformedPosts = posts
+    .filter(post => post && post.author) // Filter out null posts or posts with null authors
+    .map(post => ({
+      id: post._id,
+      author: {
+        name: `${post.author.firstName || 'Unknown'} ${post.author.lastName || 'User'}`,
+        title: 'Community Member', 
+        avatar: `https://i.pravatar.cc/150?u=${post.author.email || 'default'}`, 
+      },
+      content: post.content || '',
+      date: post.createdAt,
+      likes: post.likes?.length || 0,
+      comments: post.comments?.length || 0,
+      tags: post.tags || [],
+      readTime: post.readTime || 0,
+      isPublished: post.isPublished || false,
+    }));
+
+  // Transform discover posts with null checks
+  const transformedDiscoverPosts = discoverPosts
+    .filter(post => post && post.author) // Filter out null posts or posts with null authors
+    .map(post => ({
+      id: post._id,
+      author: {
+        name: `${post.author.firstName || 'Unknown'} ${post.author.lastName || 'User'}`,
+        title: 'Community Member', 
+        avatar: `https://i.pravatar.cc/150?u=${post.author.email || 'default'}`, 
+      },
+      content: post.content || '',
+      date: post.createdAt,
+      likes: post.likesCount || 0,
+      comments: post.commentsCount || 0,
+      tags: post.tags || [],
+      readTime: post.readTime || 0,
+      isPublished: post.isPublished || false,
+      isLiked: post.isLiked || false,
+    }));
 
   if (!isAuthenticated) {
     return (

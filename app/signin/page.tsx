@@ -9,9 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password_input';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import {clearError } from '@/store/slices/authSlice';
-import {loginUser } from '@/store/slices/authAPI';
-
+import { clearError } from '@/store/slices/authSlice';
+import { loginUser, initiateGoogleAuth } from '@/store/slices/authAPI';
 
 const Signin = () => {
   const dispatch = useAppDispatch();
@@ -21,20 +20,28 @@ const Signin = () => {
     email: '',
     password: ''
   });
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(clearError());
     try {
       const result = await dispatch(loginUser(formData)).unwrap();
+      // Login successful, user will be redirected by useEffect
     } catch (error) {
       console.error('Login failed:', error);
     }
+  };
+
+  const handleGoogleSignin = () => {
+    dispatch(clearError());
+    initiateGoogleAuth();
   };
 
   useEffect(() => {
@@ -145,6 +152,7 @@ const Signin = () => {
             <Button
               type="button"
               variant="outline"
+              onClick={handleGoogleSignin}
               className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-3 px-4 rounded-full text-lg flex items-center justify-center space-x-3"
               disabled={isLoading}
             >

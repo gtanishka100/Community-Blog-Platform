@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, LoginResponse, AuthError } from './authTypes';
-import { signupUser, loginUser } from './authAPI'; // Import both functions from authAPI
+import { signupUser, loginUser, handleGoogleAuthSuccess } from './authAPI'; // Import Google auth function
 
 const initialState: AuthState = {
   user: null,
@@ -50,7 +50,7 @@ const authSlice = createSlice({
     },
     setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
       state.tokens = action.payload;
-      state.isAuthenticated = true; // Add this line
+      state.isAuthenticated = true;
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', action.payload.accessToken);
         localStorage.setItem('refreshToken', action.payload.refreshToken);
@@ -70,8 +70,6 @@ const authSlice = createSlice({
         state.tokens = action.payload.tokens;
         state.isAuthenticated = true;
         state.error = null;
-        
-        // Note: localStorage is already handled in authAPI.ts
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -92,8 +90,6 @@ const authSlice = createSlice({
         state.tokens = action.payload.tokens;
         state.isAuthenticated = true;
         state.error = null;
-        
-        // Note: localStorage is already handled in authAPI.ts
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -101,6 +97,26 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.tokens = null;
+      })
+
+      // Google Auth cases
+      .addCase(handleGoogleAuthSuccess.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(handleGoogleAuthSuccess.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.tokens = action.payload.tokens;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+        .addCase(handleGoogleAuthSuccess.rejected, (state, action) => {
+          state.isLoading = false;
+          state.error = typeof action.payload === 'string' ? action.payload : 'Google authentication failed';
+          state.isAuthenticated = false;
+          state.user = null;
+          state.tokens = null;
       });
   },
 });
