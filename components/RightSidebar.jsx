@@ -1,9 +1,13 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useAppSelector } from '@/lib/hooks';
 
 const RightSidebar = () => {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
   const trendingTopics = [
     { id: 1, name: 'Flutter', posts: 124 },
     { id: 2, name: 'TensorFlow', posts: 89 },
@@ -29,22 +33,29 @@ const RightSidebar = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Trending Topics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {trendingTopics.map((topic) => (
-              <Badge key={topic.id} variant="secondary" className="px-3 py-1 cursor-pointer hover:bg-secondary/80">
-                #{topic.name}
-                <span className="ml-1 text-xs text-muted-foreground">({topic.posts})</span>
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {isAuthenticated && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Trending Topics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {trendingTopics.map((topic) => (
+                <Badge
+                  key={topic.id}
+                  variant="secondary"
+                  className="px-3 py-1 cursor-pointer hover:bg-secondary/80"
+                >
+                  #{topic.name}
+                  <span className="ml-1 text-xs text-muted-foreground">({topic.posts})</span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Optional: Show upcoming events to everyone */}
       {/* <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Upcoming Events</CardTitle>
