@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, LoginResponse, AuthError } from './authTypes';
-import { signupUser, loginUser, handleGoogleAuthSuccess } from './authAPI'; // Import Google auth function
+import { signupUser, loginUser, handleGoogleAuthSuccess, logoutUser } from './authAPI'; 
 
 const initialState: AuthState = {
   user: null,
@@ -111,12 +111,32 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
       })
-        .addCase(handleGoogleAuthSuccess.rejected, (state, action) => {
-          state.isLoading = false;
-          state.error = typeof action.payload === 'string' ? action.payload : 'Google authentication failed';
-          state.isAuthenticated = false;
-          state.user = null;
-          state.tokens = null;
+      .addCase(handleGoogleAuthSuccess.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = typeof action.payload === 'string' ? action.payload : 'Google authentication failed';
+        state.isAuthenticated = false;
+        state.user = null;
+        state.tokens = null;
+      })
+
+      // Logout API cases
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.tokens = null;
+        state.isAuthenticated = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.user = null;
+        state.tokens = null;
+        state.isAuthenticated = false;
+        state.error = action.payload || 'Logout failed';
       });
   },
 });

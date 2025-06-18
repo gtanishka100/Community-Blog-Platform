@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-import { logout } from '@/store/slices/authSlice';
+import { logoutUser } from '@/store/slices/authAPI'; 
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Get authentication state from Redux store
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, isLoading } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -27,20 +26,27 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Function to handle logout
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', href: '/' },
-    { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <User size={20} />, label: 'Profile', href: '/profile' },
+    ...(isAuthenticated ? [
+      { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
+      { icon: <User size={20} />, label: 'Profile', href: '/profile' },
+    ] : []),
     {
       icon: isAuthenticated ? <LogOut size={20} /> : <LogIn size={20} />,
       label: isAuthenticated ? 'Log Out' : 'Sign In',
       href: isAuthenticated ? '#' : '/signin',
-      onClick: isAuthenticated ? handleLogout : undefined
+      onClick: isAuthenticated ? handleLogout : undefined,
+      disabled: isLoading 
     },
   ];
 
@@ -74,7 +80,6 @@ const Navbar = () => {
     objectFit="contain" 
   />
 </div>
-              {/* <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">GDG Community</span> */}
             </Link>
           
             <div className="hidden md:flex relative w-full max-w-md">
@@ -105,10 +110,16 @@ const Navbar = () => {
                 <button
                   key={index}
                   onClick={item.onClick}
-                  className="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600 transition-colors"
+                  disabled={item.disabled}
+                  className={cn(
+                    "flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600 transition-colors",
+                    item.disabled && "opacity-50 cursor-not-allowed"
+                  )}
                 >
                   {item.icon}
-                  <span className="text-xs mt-1">{item.label}</span>
+                  <span className="text-xs mt-1">
+                    {item.disabled && item.label === 'Log Out' ? 'Logging out...' : item.label}
+                  </span>
                 </button>
               ) : (
                 <Link 
@@ -138,10 +149,16 @@ const Navbar = () => {
                       item.onClick();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors text-left w-full"
+                    disabled={item.disabled}
+                    className={cn(
+                      "flex items-center px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors text-left w-full",
+                      item.disabled && "opacity-50 cursor-not-allowed"
+                    )}
                   >
                     <span className="mr-3">{item.icon}</span>
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-sm font-medium">
+                      {item.disabled && item.label === 'Log Out' ? 'Logging out...' : item.label}
+                    </span>
                   </button>
                 ) : (
                   <Link 

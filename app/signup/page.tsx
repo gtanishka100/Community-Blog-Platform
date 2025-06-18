@@ -80,13 +80,16 @@ const Signup = () => {
       isValid = false;
     }
 
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*\d)(?=.*[a-z]).{6,}$/;
+
     if (!formData.password) {
       errors.password = 'Password is required';
       isValid = false;
-    } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
+    } else if (!passwordRegex.test(formData.password)) {
+      errors.password = 'Password must be at least 6 characters, include one uppercase letter, one number, and one special character';
       isValid = false;
     }
+    
 
     setFormErrors(errors);
     return isValid;
