@@ -68,6 +68,7 @@ const PostCard = ({ post }) => {
   const handleAddComment = (commentContent) => {
     setCurrentComments(prev => prev + 1);
   };
+  
   if (!post) {
     return null;
   }
@@ -98,6 +99,22 @@ const PostCard = ({ post }) => {
         {post.content && (
           <div className="px-4 pb-3">
             <p className="text-sm">{post.content}</p>
+          </div>
+        )}
+
+        {/* ADD THIS TAGS SECTION */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="px-4 pb-3">
+            <div className="flex flex-wrap gap-2">
+              {post.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

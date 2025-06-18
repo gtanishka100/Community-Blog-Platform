@@ -177,18 +177,7 @@ const CreatePostCard = ({ onPostCreated }) => {
                   />
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="publish"
-                    checked={isPublished}
-                    onChange={(e) => setIsPublished(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <Label htmlFor="publish" className="text-sm">
-                    Publish immediately
-                  </Label>
-                </div>
+                
               </div>
             )}
           </div>
