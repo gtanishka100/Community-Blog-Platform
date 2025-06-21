@@ -15,6 +15,8 @@ import {
   PenTool,
   BookOpen,
   Sparkles,
+  Filter,
+  X,
 } from 'lucide-react';
 
 const Feed = () => {
@@ -23,6 +25,7 @@ const Feed = () => {
 
   const { posts, discoverPosts, isLoading, isLoadingDiscover, error } = useAppSelector((state) => state.blog);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { selectedTag } = useAppSelector((state) => state.tags);
   const [activeTab, setActiveTab] = useState('discover');
 
   useEffect(() => {
@@ -59,24 +62,66 @@ const Feed = () => {
       isPublished: post.isPublished || false,
     }));
 
-  const transformedDiscoverPosts = discoverPosts
-    .filter((post) => post && post.author)
-    .map((post) => ({
+  console.log('=== DISCOVER POSTS DEBUG ===');
+  console.log('Raw discoverPosts from Redux:', discoverPosts);
+  console.log('Raw discoverPosts count:', discoverPosts.length);
+  
+  discoverPosts.forEach((post, index) => {
+    console.log(`Post ${index + 1}:`, {
       id: post._id,
-      author: {
-        name: `${post.author.firstName || 'Unknown'} ${post.author.lastName || 'User'}`,
-        title: 'Community Member',
-        avatar: `https://i.pravatar.cc/150?u=${post.author.email || 'default'}`,
-      },
-      content: post.content || '',
-      date: post.createdAt,
-      likes: post.likesCount || 0,
-      comments: post.commentsCount || 0,
-      tags: post.tags || [],
-      readTime: post.readTime || 0,
-      isPublished: post.isPublished || false,
-      isLiked: post.isLiked || false,
-    }));
+      createdAt: post.createdAt,
+      content: post.content.substring(0, 50) + '...',
+      author: post.author ? `${post.author.firstName} ${post.author.lastName}` : 'No author'
+    });
+  });
+
+  const transformedDiscoverPosts = discoverPosts
+    .filter((post) => {
+      const hasPost = post && post.author;
+      console.log('Filter check - Post exists and has author:', hasPost, post);
+      return hasPost;
+    })
+    .map((post) => {
+      const transformed = {
+        id: post._id,
+        author: {
+          name: `${post.author.firstName || 'Unknown'} ${post.author.lastName || 'User'}`,
+          title: 'Community Member',
+          avatar: `https://i.pravatar.cc/150?u=${post.author.email || 'default'}`,
+        },
+        content: post.content || '',
+        date: post.createdAt,
+        likes: post.likesCount || 0,
+        comments: post.commentsCount || 0,
+        tags: post.tags || [],
+        readTime: post.readTime || 0,
+        isPublished: post.isPublished || false,
+        isLiked: post.isLiked || false,
+      };
+      console.log('Transformed post:', transformed);
+      return transformed;
+    });
+
+  // Filter posts based on selected tag
+  const filterPostsByTag = (posts) => {
+    if (!selectedTag) return posts;
+    
+    return posts.filter((post) => {
+      // Check if post has tags and if the selected tag is included
+      return post.tags && post.tags.some(tag => 
+        tag.toLowerCase() === selectedTag.toLowerCase()
+      );
+    });
+  };
+
+  const filteredDiscoverPosts = filterPostsByTag(transformedDiscoverPosts);
+  const filteredPosts = filterPostsByTag(transformedPosts);
+
+  console.log('Selected tag:', selectedTag);
+  console.log('Final transformedDiscoverPosts count:', transformedDiscoverPosts.length);
+  console.log('Filtered discover posts count:', filteredDiscoverPosts.length);
+  console.log('Final transformedDiscoverPosts:', transformedDiscoverPosts);
+  console.log('=== END DEBUG ===');
 
   if (!isAuthenticated) {
     return (
@@ -220,25 +265,37 @@ const Feed = () => {
     );
   }
 
-  const currentPosts = activeTab === 'discover' ? transformedDiscoverPosts : transformedPosts;
+  const currentPosts = activeTab === 'discover' ? filteredDiscoverPosts : filteredPosts;
   const currentLoading = activeTab === 'discover' ? isLoadingDiscover : isLoading;
+  const totalPosts = activeTab === 'discover' ? transformedDiscoverPosts.length : transformedPosts.length;
 
   return (
     <div className="py-4">
       <CreatePostCard onPostCreated={handlePostCreated} />
 
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-          <button
-            onClick={() => setActiveTab('discover')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'discover'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Discover
-          </button>
+        <div className="flex items-center space-x-4">
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab('discover')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'discover'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Discover ({currentPosts.length} / {totalPosts})
+            </button>
+          </div>
+
+          {selectedTag && (
+            <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+              <Filter className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-700">
+                Filtered by: <span className="font-medium">#{selectedTag}</span>
+              </span>
+            </div>
+          )}
         </div>
 
         <button
@@ -271,9 +328,17 @@ const Feed = () => {
           ) : (
             <div className="text-center py-8">
               <p className="text-gray-600">
-                {activeTab === 'discover'
-                  ? 'No posts to discover yet.'
-                  : 'No posts yet. Create your first post!'}
+                {selectedTag ? (
+                  <>
+                    No posts found with tag <span className="font-medium">#{selectedTag}</span>.
+                    <br />
+                    <span className="text-sm">Try selecting a different tag or clear the filter.</span>
+                  </>
+                ) : (
+                  activeTab === 'discover'
+                    ? 'No posts to discover yet.'
+                    : 'No posts yet. Create your first post!'
+                )}
               </p>
             </div>
           )}
