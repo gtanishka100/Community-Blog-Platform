@@ -1,6 +1,6 @@
 import Feed from '@/components/Feed.jsx';
 import RightSidebar from '@/components/RightSidebar';
-import LeftSidebar from '@/components/LeftSidebar.jsx';
+import LeftSidebar from '@/components/LeftSidebar.tsx';
 
 
 export default function Home() {
